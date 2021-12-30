@@ -1,0 +1,141 @@
+package okapi
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+)
+
+// Client provides the Okapi API client which should be embedded in your client
+// objects.
+type Client struct {
+	httpClient *http.Client
+	config     Config
+}
+
+// NewClient returns a new Okapi client with a default httpClient.
+func NewClient(config *Config) (*Client, error) {
+	httpClient := &http.Client{}
+
+	client := &Client{
+		config:     *config,
+		httpClient: httpClient,
+	}
+
+	return client, nil
+}
+
+// Query builds an http.Request and performs the get query itself. The response
+// body is decoded into the optional, provided out interface. It raises an error
+// if the reponse status code is anything but 200.
+func (c *Client) Query(endpoint string, out interface{}, q *QueryOptions) error {
+	r, err := c.newRequest("GET", endpoint)
+	if err != nil {
+		return err
+	}
+
+	r.setQueryOptions(q)
+
+	resp, err := c.doRequest(r)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		var buf bytes.Buffer
+		io.Copy(&buf, resp.Body)
+		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
+	}
+
+	if out != nil {
+		if err := decodeBody(resp, &out); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Write builds an http.Request and performs the write query itself. The response
+// body is decoded into the optional, provided out interface. It raises an error
+// if the reponse status code is anything but 200.
+func (c *Client) Write(endpoint string, in, out interface{}, q *WriteOptions) error {
+	r, err := c.newRequest("POST", endpoint)
+	if err != nil {
+		return err
+	}
+
+	r.obj = in
+	r.setWriteOptions(q)
+
+	resp, err := c.doRequest(r)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		var buf bytes.Buffer
+		io.Copy(&buf, resp.Body)
+		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
+	}
+
+	if out != nil {
+		if err := decodeBody(resp, &out); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// newRequest creates a new request.
+func (c *Client) newRequest(method, path string) (*request, error) {
+	base, err := url.Parse(c.config.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	r := &request{
+		config: &c.config,
+		method: method,
+		url: &url.URL{
+			Scheme:  base.Scheme,
+			User:    base.User,
+			Host:    base.Host,
+			Path:    u.Path,
+			RawPath: u.RawPath,
+		},
+		params: make(map[string][]string),
+	}
+
+	if c.config.WaitTime != 0 {
+		r.params.Set("wait", r.config.WaitTime.String())
+	}
+
+	for key, values := range u.Query() {
+		for _, value := range values {
+			r.params.Add(key, value)
+		}
+	}
+
+	return r, nil
+}
+
+// doRequest converts the request object to a standard http.Request and actually
+// performs the request.
+func (c *Client) doRequest(r *request) (*http.Response, error) {
+	req, err := r.toHTTP()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.httpClient.Do(req)
+}
