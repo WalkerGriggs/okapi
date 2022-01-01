@@ -27,18 +27,6 @@ func NewClient(config *Config) (*Client, error) {
 	return client, nil
 }
 
-// Get performs a get request to the given endpoint with additional query
-// options and decodes the response body into the optional, provided interface.
-func (c *Client) Get(endpoint string, out interface{}, q *QueryOptions) error {
-	return c.do("GET", endpoint, out, q)
-}
-
-// Post performs a post request to the given endpoint with additional query
-// options and decodes the response body into the optional, provided interface.
-func (c *Client) Post(endpoint string, out interface{}, q *QueryOptions) error {
-	return c.do("POST", endpoint, out, q)
-}
-
 // newRequest creates a new request object.
 func (c *Client) newRequest(method, path string) (*request, error) {
 	base, err := url.Parse(c.config.Address)
