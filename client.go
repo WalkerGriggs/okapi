@@ -27,71 +27,19 @@ func NewClient(config *Config) (*Client, error) {
 	return client, nil
 }
 
-// Query builds an http.Request and performs the get query itself. The response
-// body is decoded into the optional, provided out interface. It raises an error
-// if the reponse status code is anything but 200.
-func (c *Client) Query(endpoint string, out interface{}, q *QueryOptions) error {
-	r, err := c.newRequest("GET", endpoint)
-	if err != nil {
-		return err
-	}
-
-	r.setQueryOptions(q)
-
-	resp, err := c.doRequest(r)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		var buf bytes.Buffer
-		io.Copy(&buf, resp.Body)
-		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
-	}
-
-	if out != nil {
-		if err := decodeBody(resp, &out); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// Get performs a get request to the given endpoint with additional query
+// options and decodes the response body into the optional, provided interface.
+func (c *Client) Get(endpoint string, out interface{}, q *QueryOptions) error {
+	return c.do("GET", endpoint, out, q)
 }
 
-// Write builds an http.Request and performs the write query itself. The response
-// body is decoded into the optional, provided out interface. It raises an error
-// if the reponse status code is anything but 200.
-func (c *Client) Write(endpoint string, in, out interface{}, q *WriteOptions) error {
-	r, err := c.newRequest("POST", endpoint)
-	if err != nil {
-		return err
-	}
-
-	r.obj = in
-	r.setWriteOptions(q)
-
-	resp, err := c.doRequest(r)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		var buf bytes.Buffer
-		io.Copy(&buf, resp.Body)
-		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
-	}
-
-	if out != nil {
-		if err := decodeBody(resp, &out); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// Post performs a post request to the given endpoint with additional query
+// options and decodes the response body into the optional, provided interface.
+func (c *Client) Post(endpoint string, out interface{}, q *QueryOptions) error {
+	return c.do("POST", endpoint, out, q)
 }
 
-// newRequest creates a new request.
+// newRequest creates a new request object.
 func (c *Client) newRequest(method, path string) (*request, error) {
 	base, err := url.Parse(c.config.Address)
 	if err != nil {
@@ -125,17 +73,40 @@ func (c *Client) newRequest(method, path string) (*request, error) {
 			r.params.Add(key, value)
 		}
 	}
-
 	return r, nil
 }
 
-// doRequest converts the request object to a standard http.Request and actually
-// performs the request.
-func (c *Client) doRequest(r *request) (*http.Response, error) {
-	req, err := r.toHTTP()
+// do builds an http.Request, converts the request object to a standard
+// http.Request, and performs the get query itself. The response body is decoded
+// into the optional, provided out interface. It raises an error if the reponse
+// status code is anything but 200.
+func (c *Client) do(method, endpoint string, out interface{}, q *QueryOptions) error {
+	req, err := c.newRequest("GET", endpoint)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return c.httpClient.Do(req)
+	http, err := req.toHTTP()
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(http)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		var buf bytes.Buffer
+		io.Copy(&buf, resp.Body)
+		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
+	}
+
+	if out != nil {
+		if err := decodeBody(resp, &out); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -20,7 +20,7 @@ func (c *FilmsClient) Get(name string) (*FilmsResponse, error) {
 	}
 
 	var res FilmsResponse
-	if err := c.client.Query("/api/films/", &res, opts); err != nil {
+	if err := c.client.Get("/api/films/", &res, opts); err != nil {
 		return nil, err
 	}
 	return &res, nil

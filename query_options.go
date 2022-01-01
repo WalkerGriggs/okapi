@@ -7,10 +7,6 @@ import (
 
 // QueryOptions is used to pass additional parameters to a request object.
 type QueryOptions struct {
-	// AllowStale allows any Nomad server (non-leader) to service
-	// a read. This allows for lower latency and higher throughput
-	// AllowStale bool
-
 	// WaitTime overrides the global WaitTime set in the client Config on a
 	// per-request basis.
 	WaitTime time.Duration
@@ -18,6 +14,10 @@ type QueryOptions struct {
 	// Params are additional key value pairs that will be included in the request
 	// values.
 	Params map[string]string
+
+	// obj is a body alternative. If provided and body is left empty, this object
+	// will be json encoded and used as the request.Body
+	obj interface{}
 
 	// ctx is passed through to http.NewRequestWithContext. Defaults to the
 	// background context when building the http.Request

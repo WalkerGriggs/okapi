@@ -32,7 +32,7 @@ func main() {
 		}
 
 		var res FilmsResult
-		if err := client.Query(url.Path, &res, nil); err != nil {
+		if err := client.Get(url.Path, &res, nil); err != nil {
 			panic(err)
 		}
 

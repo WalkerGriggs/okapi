@@ -21,9 +21,9 @@ type request struct {
 	// url is the query endpoint
 	url *url.URL
 
-	// Values maps a string key to a list of values. It is used for query
+	// params maps a string key to a list of values. It is used for query
 	// parameters and form values. Unlike in the http.Header map, the keys in a
-	// Values map are case-sensitive.
+	// url.Values map are case-sensitive.
 	params url.Values
 
 	// body is the request body formatted as an io.Reader
@@ -37,10 +37,10 @@ type request struct {
 	ctx context.Context
 }
 
-// setQueryOptions unpacks QueryOptions into the request params map.
-func (r *request) setQueryOptions(q *QueryOptions) {
+// withQueryOptions unpacks QueryOptions into the request object.
+func (r *request) withQueryOptions(q *QueryOptions) *request {
 	if q == nil {
-		return
+		return r
 	}
 
 	if q.WaitTime != 0 {
@@ -52,15 +52,9 @@ func (r *request) setQueryOptions(q *QueryOptions) {
 	}
 
 	r.ctx = q.Context()
-}
+	r.obj = q.obj
 
-// setWriteOptions unpacks WriteOptions into the request params map.
-func (r *request) setWriteOptions(w *WriteOptions) {
-	if w == nil {
-		return
-	}
-
-	r.ctx = w.Context()
+	return r
 }
 
 // toHTTP converts our request abstraction to an actual http.Request.
