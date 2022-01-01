@@ -13,14 +13,16 @@ func Films(client *okapi.Client) *FilmsClient {
 }
 
 func (c *FilmsClient) Get(name string) (*FilmsResponse, error) {
+	var res FilmsResponse
+
 	opts := &okapi.QueryOptions{
+		Out: &res,
 		Params: map[string]string{
 			"search": name,
 		},
 	}
 
-	var res FilmsResponse
-	if err := c.client.Get("/api/films/", &res, opts); err != nil {
+	if err := c.client.Get("/api/films/", opts); err != nil {
 		return nil, err
 	}
 	return &res, nil

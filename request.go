@@ -52,7 +52,7 @@ func (r *request) withQueryOptions(q *QueryOptions) *request {
 	}
 
 	r.ctx = q.Context()
-	r.obj = q.obj
+	r.obj = q.Obj
 
 	return r
 }

@@ -66,9 +66,9 @@ func (c *Client) newRequest(method, path string) (*request, error) {
 
 // do builds an http.Request, converts the request object to a standard
 // http.Request, and performs the get query itself. The response body is decoded
-// into the optional, provided out interface. It raises an error if the reponse
-// status code is anything but 200.
-func (c *Client) do(method, endpoint string, out interface{}, q *QueryOptions) error {
+// into the QueryOptions Out interface. It raises an error if the reponse status
+// code is anything but 200.
+func (c *Client) do(method, endpoint string, q *QueryOptions) error {
 	req, err := c.newRequest("GET", endpoint)
 	if err != nil {
 		return err
@@ -91,8 +91,8 @@ func (c *Client) do(method, endpoint string, out interface{}, q *QueryOptions) e
 		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
 	}
 
-	if out != nil {
-		if err := decodeBody(resp, &out); err != nil {
+	if q.Out != nil {
+		if err := decodeBody(resp, &q.Out); err != nil {
 			return err
 		}
 	}

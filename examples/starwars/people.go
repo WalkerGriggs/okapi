@@ -13,14 +13,16 @@ func People(client *okapi.Client) *PeopleClient {
 }
 
 func (c *PeopleClient) Get(name string) (*PeopleResponse, error) {
+	var res PeopleResponse
+
 	opts := &okapi.QueryOptions{
+		Out: &res,
 		Params: map[string]string{
 			"search": name,
 		},
 	}
 
-	var res PeopleResponse
-	if err := c.client.Get("/api/people/", &res, opts); err != nil {
+	if err := c.client.Get("/api/people/", opts); err != nil {
 		return nil, err
 	}
 	return &res, nil
