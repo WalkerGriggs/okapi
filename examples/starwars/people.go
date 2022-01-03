@@ -22,7 +22,7 @@ func (c *PeopleClient) Get(name string) (*PeopleResponse, error) {
 		},
 	}
 
-	if err := c.client.Get("/api/people/", opts); err != nil {
+	if _, err := c.client.Get("/api/people/", opts); err != nil {
 		return nil, err
 	}
 	return &res, nil

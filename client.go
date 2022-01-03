@@ -68,33 +68,33 @@ func (c *Client) newRequest(method, path string) (*request, error) {
 // http.Request, and performs the get query itself. The response body is decoded
 // into the QueryOptions Out interface. It raises an error if the reponse status
 // code is anything but 200.
-func (c *Client) do(method, endpoint string, q *QueryOptions) error {
+func (c *Client) do(method, endpoint string, q *QueryOptions) (*http.Response, error) {
 	req, err := c.newRequest("GET", endpoint)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	http, err := req.toHTTP()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := c.httpClient.Do(http)
 	if err != nil {
-		return err
+		return resp, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		var buf bytes.Buffer
 		io.Copy(&buf, resp.Body)
-		return fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
+		return resp, fmt.Errorf("Unexpected response code: %d (%s)", resp.StatusCode, buf.String())
 	}
 
 	if q.Out != nil {
 		if err := decodeBody(resp, &q.Out); err != nil {
-			return err
+			return resp, err
 		}
 	}
-	return nil
+	return resp, nil
 }
