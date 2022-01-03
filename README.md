@@ -1,6 +1,8 @@
+<img align="right" height=400px src="./assets/okapi.png"/>
+
+
 # okapi
 
-<img align="right" height=300px src="./assets/okapi.png"/>
 
 _noun, plural **o·ka·pis**, (especially collectively) **o·ka·pi**_
 
@@ -12,7 +14,7 @@ _noun, plural **o·ka·pis**, (especially collectively) **o·ka·pi**_
 - Transparent error handling
 - Flexible encoding / decoding
 - Configurable, with sensible defaults
-
+- Adheres to standard "net/http" interfaces 
 
 ### Examples
 
@@ -34,9 +36,13 @@ func (c *films) Get(name string) (*FilmsResponse, error) {
         Params: map[string]string{
             "search": name,
         },
+        Out: &res,
     }
 
-    return &res, c.client.Query("/api/films/", &res, opts); err != nil {
+    if _, err := c.client.Get("/api/films/", opts); err != nil {
+        return nil, err
+    }
+    return &res, nil
 }
 
 ```
