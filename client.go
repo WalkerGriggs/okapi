@@ -74,7 +74,7 @@ func (c *Client) do(method, endpoint string, q *QueryOptions) (*http.Response, e
 		return nil, err
 	}
 
-	http, err := req.toHTTP()
+	http, err := req.withQueryOptions(q).toHTTP()
 	if err != nil {
 		return nil, err
 	}
