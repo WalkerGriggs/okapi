@@ -69,7 +69,7 @@ func (c *Client) newRequest(method, path string) (*request, error) {
 // into the QueryOptions Out interface. It raises an error if the reponse status
 // code is anything but 200.
 func (c *Client) do(method, endpoint string, q *QueryOptions) (*http.Response, error) {
-	req, err := c.newRequest("GET", endpoint)
+	req, err := c.newRequest(method, endpoint)
 	if err != nil {
 		return nil, err
 	}
